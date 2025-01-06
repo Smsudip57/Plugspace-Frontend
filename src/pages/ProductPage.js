@@ -401,7 +401,7 @@ const ProductPage = ({params}) => {
             </div>
           </div>}
         </div>
-        <div className='  rounded-full aspect-square bg-gradient-to-r from-[#a017c9] to-[#2ab6e4] text-white flex items-center justify-center cursor-pointer' onClick={() => setMinimized(!minimized)}>
+        <div className='  rounded-full aspect-square bg-green-500 text-white flex items-center justify-center cursor-pointer' onClick={() => setMinimized(!minimized)}>
           <MessageSquareMore size={40} />
           </div>
         </div>}
