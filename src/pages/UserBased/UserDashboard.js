@@ -3,6 +3,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Copy, RefreshCw, Trash2, ExternalLink } from 'lucide-react';
 import axios from 'axios';
+import ChatHistory from './ChatHistory';
+
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -131,6 +133,15 @@ const UserDashboard = () => {
           >
            API Key
           </button>
+          <button
+            onClick={() => setActiveTab('chat')}
+            className={`px-4 py-2 text-sm sm:px-6 sm:text-base rounded-lg transition-colors ${activeTab === 'chat'
+              ? 'bg-gradient-to-r from-[#a017c9] to-[#2ab6e4] text-white'
+              : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+          >
+           Chat History
+          </button>
         </div>
 
         {/* API Key Section */}
@@ -179,6 +190,8 @@ const UserDashboard = () => {
             </div>
           </div>
         )}
+        {activeTab === 'chat' && 
+        <ChatHistory />}
 
         {/* Saved Products Section */}
         {activeTab === 'savedProducts' && (
