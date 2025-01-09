@@ -315,8 +315,14 @@ const handleDelete = async () => {
             {!producStickOnTop && <button className='text-green-500 h-max bg-green-500/10 p-2 rounded-full text-xs hover:text-gray-300' onClick={() => setProductStickOnTop(true)}>
                         <Eye size={16}/>
                     </button>}
+                    {sessionActive && (
+                  <span className={`pr-5 pt-1 ${Sessions?.find((session) => session?._id === sessionActive)?.status === 'active' ? 'text-green-500' : 'text-red-500'}`}>
+                    {Sessions?.find((session) => session?._id === sessionActive)?.status}
+                  </span>
+                )}
+
             {sessionActive && <button className='text-red-500 bg-red-500/10 py-2 px-4 rounded-lg text-xs hover:text-gray-300' onClick={() => handleDelete(sessionActive)}>
-                End
+                delete
             </button>}
             </div>
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect,useRef } from 'react';
 import { useLocation, useNavigate,useParams } from 'react-router-dom';
-import { ArrowLeft, Heart, ExternalLink, Share2,MessageSquareMore,Image,SendHorizontal,MessageCircleMore,CheckCheck     } from 'lucide-react';
+import { ArrowLeft, Heart, ExternalLink, Share2,MessageSquareMore,SendHorizontal,MessageCircleMore,CheckCheck     } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
@@ -92,11 +92,11 @@ const ProductPage = ({params}) => {
       // timestamp: new Date().toISOString()
       isReadByUser : true
     };
-    
     if (messageData.sessionId && messageData.message) {
       // Emit the message to the server
       socket.emit("sendMessage", messageData);
       setNewMessage("");
+      
     }
   };
 
@@ -178,7 +178,7 @@ const ProductPage = ({params}) => {
 
   const handleDelete = async () => {
       try {
-          const response = await axios.post('/api/chat/delete', {
+          const response = await axios.post('/api/chat/end', {
               sessionId: sessionActive
           })
           if(response.status === 200){
@@ -190,6 +190,69 @@ const ProductPage = ({params}) => {
       } catch (error) {
           
       }
+  }
+
+
+  const handleStartNew = async () => {
+    try {
+      const response = await axios.post('/api/chat/end', {
+          sessionId: sessionActive
+      })
+      if(response.status === 200){
+        setChatMessages([]);
+      }
+  } catch (error) {
+      
+  }
+    try {
+      try {
+        if(!newMessage){
+          setNewMessage('I have a query on different product!')
+        }
+        const getnewid = async () => {
+          try {
+            const response =  await axios.post(
+              `${process.env.REACT_APP_API_BASEURL}/api/chat/start-session`,
+              {
+                userId: user?._id || null,
+                productId: productId,
+              },
+              {
+                withCredentials: true
+              }
+            )
+            if(response?.data?.sessionId){
+              setSessionActive(response?.data?.sessionId);
+              setChatBoxOpen(true);
+              setMinimized(false);
+              setSessionProduct(product);
+              if(response.status === 201 && socket){
+                  socket.emit("newSessionCreated", response?.data?.sessionId);
+                }
+              return response?.data?.sessionId
+            }
+          } catch (error) {
+            console.error('Error starting session:', error);
+          }
+        }
+          const getid = await getnewid();
+          const messageData = {
+            sessionId: sessionActive || getid,
+            sender: 'user',
+            message: newMessage.trim()||'I have a query on different product!',
+            isReadByUser : true
+          };
+          socket.emit("sendMessage", messageData);
+          setMinimized(false);
+          setChatBoxOpen(true);
+          setSessionProduct(product);
+          setSessionActive(getid);
+      } catch (error) {
+        
+      }
+    } catch (error) {
+      
+    }
   }
 
   
@@ -241,7 +304,6 @@ const ProductPage = ({params}) => {
         );
 
         if (response.data) {
-          console.log('got the data')
           setVariableLoaded(true);
           setProduct(response.data);
         }
@@ -249,7 +311,6 @@ const ProductPage = ({params}) => {
         console.error('Error fetching product data:', error);
 
         if (retryAttempt < MAX_RETRIES) {
-          console.log('Retrying...', retryAttempt);
           retryTimeout = setTimeout(() => {
             getProductData(retryAttempt + 1);
           }, 1000); // Retry after 1 second
@@ -395,7 +456,8 @@ const ProductPage = ({params}) => {
                   type='file'
                   accept='image/*'
                 />
-                <span className='h-full aspect-square text-[#2ab6e4] hover:text-[#a017c9] transition-colors flex items-center justify-center cursor-pointer hidden'><Image /></span>
+                { sessionProduct.productId !== product.productId && 
+                  <span className='h-full aspect-square text-[#2ab6e4] hover:text-[#a017c9] transition-colors flex flex-nowrap text-nowrap px-4 items-center justify-center cursor-pointer' onClick={handleStartNew}>Start New</span>}
                 <input
                 className='w-full h-full text-white px-3 bg-inherit border-l border-gray-700 outline-none' value={newMessage} onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => {
@@ -475,7 +537,7 @@ const ProductPage = ({params}) => {
                 ${((product.price * 1.3).toFixed(2))}
                 </p>
                 {/* Only show seller info for premium users */}
-                {isPremiumUser && (
+                {false && (
                   <div className="text-right">
                     <p className="mb-1 text-sm text-gray-400">Seller:</p>
                     <p className="font-medium text-white">{product.seller}</p>
@@ -485,7 +547,7 @@ const ProductPage = ({params}) => {
             </div>
 
             {/* Only show shop ID for premium users */}
-            {isPremiumUser && (
+            {false && (
               <div className="pt-6 space-y-4 border-t border-gray-700">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-gray-800 rounded-lg">
