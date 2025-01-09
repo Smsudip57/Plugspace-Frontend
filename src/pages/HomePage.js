@@ -159,12 +159,12 @@ const HomePage = () => {
       <div className="px-4 py-8 bg-[#210433]"> {/* Reduced padding */}
         <div className="container mx-auto text-center"> {/* Added text-center */}
           {/* Purple text */}
-          <h2 className="mb-2 text-xl sm:text-2xl font-bold text-[#f51cea]"> {/* Adjusted size and margin */}
-            Over 5,000 suppliers and 2+ million products to choose from.
+          <h2 className=" mb-2 text-xl sm:text-2xl font-bold text-[#f51cea]"> {/* Adjusted size and margin */}
+          Upload your image, and Plugspace <span className="text-[#2ab6e4]">Ai</span> takes care of the rest!
           </h2>
           {/* White and blue text */}
-          <h1 className="text-2xl font-bold text-white sm:text-3xl md:text-4xl"> {/* Adjusted size */}
-            Dropship anything, anywhere, with the world's most powerful <span className="text-[#2ab6e4]">Ai</span> platform.
+          <h1 className=" mb-2 text-xl sm:text-2xl font-semibold text-white"> {/* Adjusted size */}
+          Meet Plugspace, the first world's <span className="text-[#2ab6e4]">Ai</span> shopping assistant that scans sites like Amazon, Alibaba, and Temu to rank the best deals for dropshipping and personal shopping.
           </h1>
         </div>
       </div>
