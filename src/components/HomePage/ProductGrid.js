@@ -272,10 +272,21 @@ const ProductGrid = ({ onProductClick, selectedCategory, selectedSubCategory, se
         return;
       }
 
-      await axios.post('/api/user/saved-products/bulk', {
-        productIds: productsToSave,
-        email: user.email
-      });
+      if(imageProducts.length > 0) {
+        const products = imageProducts.filter(product => productsToSave.includes(product.productId));
+        await axios.post('/api/user/saved-products/bulk', {
+          products: products,
+          productIds: productsToSave,
+          email: user.email
+        });
+        
+      }else{
+
+        await axios.post('/api/user/saved-products/bulk', {
+          productIds: productsToSave,
+          email: user.email
+        });
+      }
 
       const newSavedProducts = { ...savedProducts };
       productsToSave.forEach(id => {

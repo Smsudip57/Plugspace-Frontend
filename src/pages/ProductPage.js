@@ -22,6 +22,7 @@ const ProductPage = ({params}) => {
   const isPremiumUser = ['premium', 'standard', 'basic'].includes(user?.subscription);
   const [selectedImageIndex, setselectedImageIndex] = useState();
   const { productId } = useParams(); 
+  const [variableLoaded, setVariableLoaded] = useState(false);
   const [sessionActive, setSessionActive] = useState();
   const [chatBoxOpen, setChatBoxOpen] = useState(false);
   const [chatmessages, setChatMessages] = useState([]);
@@ -33,6 +34,7 @@ const ProductPage = ({params}) => {
   const [selectedSize, setSelectedSize] = useState('');
   const [Quantity, setQuantity] = useState(1);
   const endOfMessagesRef = useRef(null);  
+  const isFetchingRef = useRef(false);
 
   // Use this function to scroll to the bottom of the chat whenever new messages are added
   const scrollToBottom = () => {
@@ -94,11 +96,6 @@ const ProductPage = ({params}) => {
     if (messageData.sessionId && messageData.message) {
       // Emit the message to the server
       socket.emit("sendMessage", messageData);
-
-      // Optimistically update the UI
-      // setChatMessages((prevMessages) => [...prevMessages, messageData]);
-
-      // Clear the input
       setNewMessage("");
     }
   };
@@ -167,9 +164,6 @@ const ProductPage = ({params}) => {
   
 
   const handleQuery = async () => {
-    // if((product?.colors?.length>0 && !selectedColor) || (product?.sizes?.length>0 && !selectedSize)){
-    //   return
-    // }else 
     if(!sessionActive){
       try {
         if(!newMessage){
@@ -218,47 +212,61 @@ const ProductPage = ({params}) => {
     checkIfSaved();
   }, [user, queryProduct]);
 
+
+
   useEffect(() => {
     const MAX_RETRIES = 3; // Max number of retries
-    const controller = new AbortController();
-    const signal = controller.signal;
-  
+    // const controller = new AbortController();
+    // const signal = controller.signal;
+    let retryTimeout;
+
     const getProductData = async (retryAttempt = 0) => {
+      if (isFetchingRef.current) return; // Prevent duplicate fetches
+      isFetchingRef.current = true; // Mark as fetching
+
+      setVariableLoaded(false); // Start loader
+      setProduct(queryProduct);
+
       if (!user || user.subscription === 'free') {
-        setProduct(queryProduct)
+        setVariableLoaded(true); // Stop loader for free users
+        isFetchingRef.current = false;
         return;
       }
-  
+
       try {
         const response = await axios.post(
           `${process.env.REACT_APP_API_BASEURL}/api/user/getproductinfo`,
-          { ...queryProduct , productId: productId, email: user.email },
-          { signal,withCredentials: true }
+          { ...queryProduct, productId, email: user.email },
+          { withCredentials: true }
         );
-  
+
         if (response.data) {
-          setProduct(response.data); 
-          return; // Exit early to stop retries
+          console.log('got the data')
+          setVariableLoaded(true);
+          setProduct(response.data);
         }
       } catch (error) {
-        if (axios.isCancel(error)) {
-        } else {
-          console.error('Error getting product info:', error);
-  
-          // Retry logic (only on failure)
-          if (retryAttempt < MAX_RETRIES) {
-            setTimeout(() => getProductData(retryAttempt + 1), 1000);
-          } else {
-            console.error('Max retries reached. Could not fetch product data.');
-          }
+        console.error('Error fetching product data:', error);
+
+        if (retryAttempt < MAX_RETRIES) {
+          console.log('Retrying...', retryAttempt);
+          retryTimeout = setTimeout(() => {
+            getProductData(retryAttempt + 1);
+          }, 1000); // Retry after 1 second
+        }else{
+          setVariableLoaded(true);
         }
+      } finally {
+         // Stop loader
+        isFetchingRef.current = false;
       }
     };
-  
+
     getProductData();
-  
+
     return () => {
-      controller.abort(); // Cancel the request on cleanup
+      // controller.abort();
+      clearTimeout(retryTimeout);
     };
   }, [user, queryProduct, productId]);
   
@@ -284,7 +292,7 @@ const ProductPage = ({params}) => {
       setSaving(true);
       if (!isSaved) {
         await axios.post('/api/user/saved-products', {
-          productId: product.productId,
+          ...product,
           email: user.email
         });
         setIsSaved(true);
@@ -339,7 +347,7 @@ const ProductPage = ({params}) => {
       { chatBoxOpen &&
         <div className="fixed right-10 z-20 bottom-10">
         <div className='w-16 relative mb-2'>
-          {!minimized && <div className='w-[340px] md:w-[450px] h-[600px] p-4 bg-[#111827] absolute right-0 bottom-[100%] border border-gray-700 rounded-lg shadow shadow-[#2ab6e4]'>
+          {!minimized && <div className='w-[340px] md:w-[450px] h-[600px] p-4 bg-[#111827] absolute right-0 bottom-[100%] border border-gray-700 rounded-lg shadow shadow-[#2ab6e4]' onMouseLeave={() => setMinimized(true)}>
             <div className='h-full w-full bg-[#] '>
               <div className='h-14 gap-5 pb-4 w-full border-b border-gray-700 flex items-center'>
                 {/* <span className='aspect-square'>
@@ -492,7 +500,15 @@ const ProductPage = ({params}) => {
               </div>
             )}
             {isPremiumUser && (
-              <div className="pt-6 space-y-4 border-t border-gray-700">
+              <div className="pt-6 space-y-4 border-t border-gray-700 w-full">
+                  { !variableLoaded && !(product?.images?.length>0 || product?.colors?.length>0 || product?.sizes?.length>0) &&
+                    <div className="p-4 bg-gray-800 rounded-lg flex flex-wrap gap-5 w-full ">
+                      <div className="flex items-center justify-center w-full rounded-lg py-6 bg-gray-900">
+                       <div className="w-12 h-12 border-4 border-t-[#2ab6e4] border-gray-700 rounded-full animate-spin">
+                       </div>
+                    </div>
+                    </div>
+                  }
 
                   { product?.images?.length>0 &&
                     <div className="p-4 bg-gray-800 rounded-lg flex flex-wrap gap-5">

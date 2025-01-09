@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Save, Camera } from 'lucide-react';
+import { Search, ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Save, Camera, Download, Check } from 'lucide-react';
 import axios from 'axios';
 const ProductManagement = () => {
   const [loading, setLoading] = useState(false);
@@ -103,6 +103,26 @@ const toggleSubCategory = (subCategory) => {
         searchbyimageRef.current.value = '';
       }
     };
+
+
+  const handleEditClick = async (product) => {
+    alert(`fetching product info for ${product.title}`);
+        try {
+          const response = await axios.post(
+            `${process.env.REACT_APP_API_BASEURL}/api/user/getproductinfo`,
+            { detailUrl: product.detail_url || product.detailUrl, productId:product.productId || product.num_iid, email: process.env.REACT_APP_ADMIN_EMAIL },
+            { withCredentials: true }
+          );
+  
+          if (response.data) {
+            if(!(response.data.colors.length>0 || response.data.sizes.length>0  || response.data.images.length>0 )){alert('No colors, sizes or images found');return;}
+            setProducts(prev => prev.map(p => (p?.productId === response.data.productId || p?.num_iid === response.data.productId)? { ...p, colors: response.data.colors, sizes: response.data.sizes, images: response.data.images } : p));
+          }
+        } catch (error) {
+          alert(error.response?.data?.error || 'Something went wrong');
+        }
+  
+  }
   
 
   // Categories sidebar render
@@ -386,7 +406,7 @@ const toggleSubCategory = (subCategory) => {
   const handleFinalSave = async (categoryInfo = null) => {
     setSavingProducts(true);
     try {
-      const productsToSave = products
+        const productsToSave = products
         .filter(product => selectedProducts.has(product.num_iid||product.productId))
         .map(product => {
 
@@ -404,6 +424,9 @@ const toggleSubCategory = (subCategory) => {
             seller: product.seller_nick,
             shopId: product.shop_id,
             detailUrl: product.detail_url,
+            images: product?.images,
+            colors: product?.colors,
+            sizes: product?.sizes,
             category: mainCategory,
             subcategory: subcategory
           };}
@@ -581,15 +604,25 @@ const toggleSubCategory = (subCategory) => {
                               {product.seller_nick}
                             </p> */}
                           </div>
-                          <div className="mt-4">
+                          <div className="mt-4 flex gap-1">
                             <a
                               href={product.detail_url} // Use the product's detail URL or any other link
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-4 py-2 text-white bg-[#2ab6e4] rounded hover:bg-[#1a94c4]"
+                              className="px-4 py-2 text-white bg-[#2ab6e4] rounded hover:bg-[#1a94c4] text-nowrap"
                             >
                               View Details
                             </a>
+                            {/* <span 
+                              className=' text-white'
+                            > */}
+                             {selectedProducts.has(product.num_iid || product.productId) && ((product.colors?.length > 0  || product.sizes?.length > 0 || product.images?.length > 0 )? <span className="p-2 text-white aspect-square bg-green-600 rounded hover:bg-green-700" >
+                              <Check />
+                              </span>: <span className="p-2 text-white aspect-square bg-gray-700 rounded hover:bg-gray-600" onClick={() => handleEditClick(product)}>
+                                <Download />
+                                </span>
+                              )}
+                            
                           </div>
                         </div>
                       </div>

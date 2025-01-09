@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, X, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, X, AlertCircle,Pen } from 'lucide-react';
 import axios from 'axios';
 
 const CategoryManagement = () => {
@@ -8,6 +8,7 @@ const CategoryManagement = () => {
   const [error, setError] = useState(null);
   const [newCategory, setNewCategory] = useState('');
   const [newSubcategories, setNewSubcategories] = useState({});
+  const [cat, setCat] = useState('');
 
   const fetchCategories = async () => {
     try {
@@ -88,6 +89,28 @@ const CategoryManagement = () => {
     }
   };
 
+  const chnageCat = async (e) => {
+    if (e.key !== 'Enter') return; 
+    const id = e.target.dataset.id; // Retrieve the category ID from the input's dataset
+    const newName = e.target.value; 
+  
+    try {
+      await axios.post(
+        `${process.env.REACT_APP_API_BASEURL}/api/admin/changesubcategory`,
+        { prev: id, neww: newName, email: process.env.REACT_APP_ADMIN_EMAIL },
+        { params: { email: process.env.REACT_APP_ADMIN_EMAIL } }
+      );
+      await fetchCategories(); // Re-fetch categories after update
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update category');
+    }
+    finally {
+      setCat('');
+    }
+  };
+
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -146,13 +169,30 @@ const CategoryManagement = () => {
             <div className="pl-6 mt-4 space-y-2">
               {category.subcategories?.map((subcategory) => (
                 <div key={subcategory._id} className="flex items-center justify-between group">
-                  <span className="text-gray-300">{subcategory.name}</span>
+                  <span className="text-gray-300">{cat===subcategory.name?
+                    <input
+                    type="text" 
+                    placeholder='Press Enter to save'
+                    onKeyDown={(e) => chnageCat(e)}
+                    data-id={subcategory.name} 
+                    className='w-full px-3 py-2 text-white bg-gray-700 rounded focus:ring-2 focus:ring-[#2ab6e4]'
+                  />
+                  :<span>{subcategory.name}</span>}</span>
+                  <span>
+
+                  <button
+                    onClick={() => setCat(subcategory.name)}
+                    className="invisible p-1 text-gray-500 rounded group-hover:visible hover:bg-gray-700"
+                    >
+                    <Pen className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => handleDeleteSubcategory(category._id, subcategory._id)}
                     className="invisible p-1 text-red-500 rounded group-hover:visible hover:bg-gray-700"
-                  >
+                    >
                     <X className="w-4 h-4" />
                   </button>
+                    </span>
                 </div>
               ))}
               {/* Add New Subcategory */}
