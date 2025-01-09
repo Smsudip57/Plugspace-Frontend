@@ -19,7 +19,7 @@ const SupportChatting = () => {
 //   const [SearchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
 
-
+ 
 
 
   const scrollToBottom = () => {
@@ -49,6 +49,8 @@ const SupportChatting = () => {
   }, []); 
 
 
+
+  
 
 
 
@@ -204,7 +206,7 @@ const SupportChatting = () => {
   const sendMessage = async() => {
     const messageData = {
       sessionId: sessionActive ,
-      sender: 'admin',
+      sender: 'user',
       message: newMessage.trim(),
       isReadByAdmin : true
     };
@@ -355,7 +357,7 @@ const handleDelete = async () => {
                 {chatmessages?.length > 0 &&
                 chatmessages.map((message, index) => (
                     <div className='w-full flex justify-between items-end' key={index}>
-                    {message?.sender === 'user' && (<span className='text-gray-700 text-xs flex flex-col'>
+                    {message?.sender === 'admin' && (<span className='text-gray-700 text-xs flex flex-col'>
                         <span>
                             {new Date(message?.timestamp ?? Date.now()).toLocaleString([], {
                             year: 'numeric',
@@ -374,7 +376,7 @@ const handleDelete = async () => {
                     <span className='py-2 px-3 text-wrap bg-[#1F2937] text-white rounded-lg w-4/5'>
                         {message?.message ?? 'No message content'}
                     </span>
-                    {message?.sender === 'admin' && (
+                    {message?.sender === 'user' && (
                         <span className='text-gray-700 text-xs flex flex-col'>
                         <span>
                             {new Date(message?.timestamp ?? Date.now()).toLocaleString([], {
@@ -395,7 +397,7 @@ const handleDelete = async () => {
                 <div ref={endOfMessagesRef} />
             </div>
             </div>
-            {false &&<div className='h-14 bg- w-full border border-gray-700 rounded-b-lg flex items-center'>
+            {Sessions?.find((session) => session?._id === sessionActive)?.status === 'active' &&<div className='h-14 bg- w-full border border-gray-700 rounded-b-lg flex items-center'>
             <input
                 className='hidden'
                 type='file'
